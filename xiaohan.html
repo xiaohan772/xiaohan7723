@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>正在访问</title>
+    <style>
+        /* TG:@xiaohan7723开发*/
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+        }
+        /* TG:@xiaohan7723开发 */
+        .msg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        /* TG:@xiaohan7723开发 */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #666;
+            font-size: 16px;
+        }
+        .loading .icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #ccc;
+            border-top-color: #666;
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+        }
+        /* TG:@xiaohan7723开发 */
+        .error {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+        }
+        .error .icon {
+            width: 48px;
+            height: 48px;
+            border: 2px solid #ff4d4f;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ff4d4f;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .error .text {
+            color: #333;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .error .contact {
+            color: #666;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        /* TG:@xiaohan7723开发 */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: none;
+        }
+        /* TG:@xiaohan7723开发 */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载/错误提示容器：统一居中 -->
+    <div class="msg-container">
+        <!-- 加载提示（初始显示） -->
+        <div class="loading" id="loading">
+            <div class="icon"></div>
+            <span>页面加载中...</span>
+        </div>
+        <!-- 错误提示（默认隐藏） -->
+        <div class="error" id="error">
+            <div class="icon">!</div>
+            <div class="text" id="errorText"></div>
+            <div class="contact">请联系小涵@xiaohan7723</div>
+        </div>
+    </div>
+    <!-- iframe保持全屏比例 -->
+    <iframe id="embeddedPage" src=""></iframe>
+
+    <script>
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const errorTextEl = document.getElementById('errorText');
+        const iframeEl = document.getElementById('embeddedPage');
+
+        // TG:@xiaohan7723开发
+        const ALLOWED_DOMAINS = [
+            "chuzhong.icu",
+            "域名"
+        ];
+
+        // TG:@xiaohan7723开发
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const value = urlParams.get(param);
+            return value ? value.trim() : null;
+        }
+
+        // TG:@xiaohan7723开发
+        function decodeBase64Url(encodedUrl) {
+            try {
+                return decodeURIComponent(atob(encodedUrl).split('').map(c => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch (err) {
+                console.error('解码失败：', err);
+                return null;
+            }
+        }
+
+        // TG:@xiaohan7723开发
+        function isAllowedUrl(url) {
+            if (!url) return false;
+            try {
+                const urlObj = new URL(url);
+                if (!['http:', 'https:'].includes(urlObj.protocol)) return false;
+                const targetDomain = urlObj.hostname;
+                return ALLOWED_DOMAINS.some(allowed => {
+                    return targetDomain === allowed || targetDomain.endsWith(`.${allowed}`);
+                });
+            } catch (err) {
+                return false;
+            }
+        }
+
+        // TG:@xiaohan7723开发
+        function showError(msg) {
+            loadingEl.style.display = 'none'; // 隐藏加载
+            errorTextEl.textContent = msg;   // 设置错误内容
+            errorEl.style.display = 'flex';  // 显示错误（居中）
+        }
+
+        // 核心逻辑
+        const encodedUrl = getQueryParam('xiaohan');
+        if (encodedUrl) {
+            const decodedUrl = decodeBase64Url(encodedUrl);
+            if (decodedUrl && isAllowedUrl(decodedUrl)) {
+                iframeEl.src = decodedUrl;
+                iframeEl.onload = () => {
+                    loadingEl.style.display = 'none';
+                    iframeEl.style.display = 'block';
+                };
+                iframeEl.onerror = () => {
+                    showError('目标页面加载失败，请检查地址是否有效');
+                };
+            } else {
+                // 解码失败或域名不允许：居中报错
+                showError('参数无效或想偷接口');
+            }
+        } else {
+            // 缺少参数：居中报错
+            showError('缺少必要的访问参数');
+        }
+    </script>
+</body>
+</html>
